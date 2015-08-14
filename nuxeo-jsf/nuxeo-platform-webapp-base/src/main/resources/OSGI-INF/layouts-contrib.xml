@@ -5157,6 +5157,14 @@
       </properties>
     </widget>
 
+    <widget name="listingBlobActions" type="documentActions">
+      <properties widgetMode="any">
+        <property name="category">BLOB_ACTIONS_LISTING</property>
+        <property name="actionsDisplay">icons</property>
+        <property name="actionContextDocument">#{field}</property>
+      </properties>
+    </widget>
+
   </extension>
 
   <extension target="org.nuxeo.ecm.platform.actions.ActionService"

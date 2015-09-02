@@ -449,7 +449,7 @@ public class LDAPReference extends AbstractReference {
                         String msg = String.format("Failed to perform inverse lookup on LDAPReference"
                                 + " resolving field '%s' of '%s' to entries of '%s'"
                                 + " using the static content of attribute '%s':"
-                                + " entry '%s' cannot be found in '%s'", fieldName, sourceDirectory,
+                                + " entry '%s' cannot be found in '%s'", fieldName, getSourceDirectory(),
                                 targetDirectoryName, staticAttributeId, targetId, targetDirectoryName);
                         throw new DirectoryEntryNotFoundException(msg);
                     }

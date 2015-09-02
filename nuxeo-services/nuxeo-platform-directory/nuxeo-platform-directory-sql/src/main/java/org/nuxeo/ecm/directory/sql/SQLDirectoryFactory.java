@@ -55,16 +55,11 @@ public class SQLDirectoryFactory extends DefaultComponent implements DirectoryFa
 
     @Override
     public void activate(ComponentContext context) {
-        directories = new SQLDirectoryRegistry();
+        directories = new SQLDirectoryRegistry(Framework.getService(DirectoryService.class), this);
     }
 
     @Override
     public void deactivate(ComponentContext context) {
-        try {
-            shutdown();
-        } catch (DirectoryException e) {
-            log.error("Error shutting down sql directories", e);
-        }
         directories = null;
     }
 
@@ -75,28 +70,18 @@ public class SQLDirectoryFactory extends DefaultComponent implements DirectoryFa
     @Override
     public void registerExtension(Extension extension) {
         Object[] contribs = extension.getContributions();
-        DirectoryServiceImpl dirService = getDirectoryService();
         for (Object contrib : contribs) {
             SQLDirectoryDescriptor descriptor = (SQLDirectoryDescriptor) contrib;
             directories.addContribution(descriptor);
-            String name = descriptor.getName();
-            if (directories.getDirectory(name) != null) {
-                dirService.registerDirectory(name, this);
-            } else {
-                // handle case where directory is marked with "remove"
-                dirService.unregisterDirectory(name, this);
-            }
         }
     }
 
     @Override
     public void unregisterExtension(Extension extension) {
         Object[] contribs = extension.getContributions();
-        DirectoryServiceImpl dirService = getDirectoryService();
         for (Object contrib : contribs) {
             SQLDirectoryDescriptor descriptor = (SQLDirectoryDescriptor) contrib;
             directories.removeContribution(descriptor);
-            dirService.unregisterDirectory(descriptor.getName(), this);
         }
     }
 

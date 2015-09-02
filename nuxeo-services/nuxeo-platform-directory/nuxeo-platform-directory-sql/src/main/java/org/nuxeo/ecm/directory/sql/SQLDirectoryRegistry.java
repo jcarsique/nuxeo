@@ -24,7 +24,8 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.directory.Directory;
-import org.nuxeo.ecm.directory.DirectoryException;
+import org.nuxeo.ecm.directory.DirectoryFactory;
+import org.nuxeo.ecm.directory.api.DirectoryService;
 import org.nuxeo.runtime.model.ContributionFragmentRegistry;
 
 /**
@@ -34,10 +35,19 @@ public class SQLDirectoryRegistry extends ContributionFragmentRegistry<SQLDirect
 
     private static final Log log = LogFactory.getLog(SQLDirectoryRegistry.class);
 
-    protected Map<String, SQLDirectoryDescriptor> descriptors = new HashMap<String, SQLDirectoryDescriptor>();
+    protected final Map<String, SQLDirectoryDescriptor> descriptors = new HashMap<String, SQLDirectoryDescriptor>();
 
     // cache map of directories
-    protected Map<String, Directory> directories = new HashMap<String, Directory>();
+    protected final Map<String, Directory> directories = new HashMap<String, Directory>();
+
+    protected final DirectoryService service;
+
+    protected final DirectoryFactory factory;
+
+    public SQLDirectoryRegistry(DirectoryService service, DirectoryFactory factory) {
+        this.service = service;
+        this.factory = factory;
+    }
 
     @Override
     public String getContributionId(SQLDirectoryDescriptor contrib) {
@@ -45,35 +55,26 @@ public class SQLDirectoryRegistry extends ContributionFragmentRegistry<SQLDirect
     }
 
     @Override
-    public void contributionUpdated(String id, SQLDirectoryDescriptor descriptor, SQLDirectoryDescriptor newOrigContrib) {
-        String directoryName = descriptor.getName();
+    public void contributionUpdated(String id, SQLDirectoryDescriptor descriptor,
+            SQLDirectoryDescriptor newOrigContrib) {
         if (descriptor.getRemove()) {
-            log.info("Removing directory: " + directoryName);
             contributionRemoved(id, descriptor);
         } else {
-            if (directories.containsKey(directoryName)) {
-                log.info("Re-registered directory: " + directoryName);
-            } else {
-                log.info("Registered directory: " + directoryName);
+            if (directories.containsKey(id)) {
+                contributionRemoved(id, descriptors.get(id));
             }
             descriptors.put(id, descriptor);
             directories.put(id, new SQLDirectory(descriptor));
+            service.registerDirectory(id, factory);
+            log.info("Registered directory: " + id);
         }
     }
 
     @Override
     public void contributionRemoved(String id, SQLDirectoryDescriptor descriptor) {
-        String descriptorName = descriptor.getName();
-        log.info("Unregistered directory: " + descriptorName);
+        service.unregisterDirectory(id, factory);
         descriptors.remove(id);
-        Directory dir = directories.remove(id);
-        if (dir != null) {
-            try {
-                dir.shutdown();
-            } catch (DirectoryException e) {
-                log.error(String.format("Error while shutting down directory '%s'", id), e);
-            }
-        }
+        log.info("Unregistered directory: " + id);
     }
 
     @Override

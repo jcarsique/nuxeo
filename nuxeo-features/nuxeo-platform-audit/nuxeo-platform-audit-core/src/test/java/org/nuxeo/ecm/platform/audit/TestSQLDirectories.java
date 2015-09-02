@@ -19,9 +19,6 @@
 
 package org.nuxeo.ecm.platform.audit;
 
-import java.sql.Connection;
-import java.util.Properties;
-
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
@@ -32,7 +29,6 @@ import org.nuxeo.ecm.directory.DirectoryException;
 import org.nuxeo.ecm.directory.DirectoryServiceImpl;
 import org.nuxeo.ecm.directory.Session;
 import org.nuxeo.ecm.directory.api.DirectoryService;
-import org.nuxeo.ecm.directory.sql.SimpleDataSource;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.test.NXRuntimeTestCase;
 
@@ -66,15 +62,6 @@ public class TestSQLDirectories extends NXRuntimeTestCase {
                 DirectoryService.NAME);
         Directory dir = dirServiceImpl.getDirectory(dirName);
         return dir;
-    }
-
-    public Connection getConnection() throws Exception {
-        return new SimpleDataSource("jdbc:hsqldb:mem:memid", "org.hsqldb.jdbcDriver", "sa", "").getConnection();
-    }
-
-    public static void setUpContextFactory() {
-        Properties props = System.getProperties();
-        props.put("java.naming.factory.initial", "org.nuxeo.ecm.directory.sql.LocalContextFactory");
     }
 
     @Test

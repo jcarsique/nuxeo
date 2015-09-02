@@ -33,6 +33,8 @@ import org.nuxeo.ecm.directory.memory.MemoryDirectoryFactory;
 import org.nuxeo.ecm.directory.registry.DirectoryFactoryMapper;
 import org.nuxeo.ecm.directory.registry.DirectoryFactoryMapperRegistry;
 import org.nuxeo.ecm.directory.registry.DirectoryFactoryRegistry;
+import org.nuxeo.runtime.RuntimeServiceEvent;
+import org.nuxeo.runtime.RuntimeServiceListener;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.model.ComponentContext;
 import org.nuxeo.runtime.model.DefaultComponent;
@@ -48,17 +50,29 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
 
     protected DirectoryFactoryMapperRegistry factoriesByDirectoryName;
 
+    protected boolean started;
+
     @Override
     public void applicationStarted(ComponentContext context) {
-        if (Framework.isTestModeSet()) {
-            // when testing, DatabaseHelper init hasn't occurred yet,
-            // so keep to lazy initialization
-            return;
-        }
+        started = true;
+        Framework.addListener(new RuntimeServiceListener() {
+
+            @Override
+            public void handleEvent(RuntimeServiceEvent event) {
+                if (event.id != RuntimeServiceEvent.RUNTIME_ABOUT_TO_STOP) {
+                    return;
+                }
+                started = false;
+                Framework.removeListener(this);
+                for (Directory dir: getDirectories()) {
+                    dir.shutdown();
+                }
+            }
+        });
         // open all directories at application startup, so that
         // their tables are created (outside a transaction) if needed
         for (Directory dir : getDirectories()) {
-            dir.getName(); // enough to create tables for SQL directories
+            dir.startup();
         }
     }
 
@@ -97,6 +111,7 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
         return directoryName;
     }
 
+    @Override
     public Directory getDirectory(String directoryName) throws DirectoryException {
         if (directoryName == null) {
             return null;
@@ -114,6 +129,7 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
         return null;
     }
 
+    @Override
     public Directory getDirectory(String name, DocumentModel documentContext) throws DirectoryException {
         if (name == null) {
             return null;
@@ -145,6 +161,7 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
         return dir;
     }
 
+    @Override
     public List<Directory> getDirectories() throws DirectoryException {
         List<Directory> directoryList = new ArrayList<Directory>();
         for (DirectoryFactory factory : factories.getFactories()) {
@@ -162,9 +179,6 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
 
     @Override
     public void deactivate(ComponentContext context) {
-        for (DirectoryFactory factory : factories.getFactories()) {
-            factory.shutdown();
-        }
         factories = null;
         factoriesByDirectoryName = null;
     }
@@ -199,6 +213,7 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
         }
     }
 
+    @Override
     public void registerDirectory(String directoryName, DirectoryFactory factory) {
         // compatibility code to add otherwise missing memory factory (as it's
         // not registered via extension points)
@@ -207,13 +222,21 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
         }
         DirectoryFactoryMapper contrib = new DirectoryFactoryMapper(directoryName, factory.getName());
         factoriesByDirectoryName.addContribution(contrib);
+        if (started) {
+            factory.getDirectory(directoryName).startup();
+        }
     }
 
+    @Override
     public void unregisterDirectory(String directoryName, DirectoryFactory factory) {
+        if (started) {
+            factory.getDirectory(directoryName).shutdown();
+        }
         DirectoryFactoryMapper contrib = new DirectoryFactoryMapper(directoryName, factory.getName());
         factoriesByDirectoryName.removeContribution(contrib);
     }
 
+    @Override
     public List<String> getDirectoryNames() throws DirectoryException {
         List<Directory> directories = getDirectories();
         List<String> directoryNames = new ArrayList<String>();
@@ -223,26 +246,32 @@ public class DirectoryServiceImpl extends DefaultComponent implements DirectoryS
         return directoryNames;
     }
 
+    @Override
     public String getDirectorySchema(String directoryName) throws DirectoryException {
         return getDirectoryOrFail(directoryName).getSchema();
     }
 
+    @Override
     public String getDirectoryIdField(String directoryName) throws DirectoryException {
         return getDirectoryOrFail(directoryName).getIdField();
     }
 
+    @Override
     public String getDirectoryPasswordField(String directoryName) throws DirectoryException {
         return getDirectoryOrFail(directoryName).getPasswordField();
     }
 
+    @Override
     public Session open(String directoryName) throws DirectoryException {
         return getDirectoryOrFail(directoryName).getSession();
     }
 
+    @Override
     public Session open(String directoryName, DocumentModel documentContext) throws DirectoryException {
         return getDirectoryOrFail(directoryName, documentContext).getSession();
     }
 
+    @Override
     public String getParentDirectoryName(String directoryName) throws DirectoryException {
         return getDirectoryOrFail(directoryName).getParentDirectory();
     }

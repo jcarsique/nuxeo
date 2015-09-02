@@ -18,6 +18,7 @@
 package org.nuxeo.ecm.directory.sql;
 
 import java.io.Serializable;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -74,18 +75,16 @@ public class TableReference extends AbstractReference {
 
     private Dialect dialect;
 
-    private boolean initialized = false;
-
     private SQLDirectory getSQLSourceDirectory() throws DirectoryException {
         Directory dir = getSourceDirectory();
         return (SQLDirectory) dir;
     }
 
-    private void initialize(SQLSession sqlSession) throws DirectoryException {
+    protected void initialize(Connection sqlConnection) throws DirectoryException {
         SQLDirectory directory = getSQLSourceDirectory();
         String createTablePolicy = directory.getConfig().createTablePolicy;
         Table table = getTable();
-        SQLHelper helper = new SQLHelper(sqlSession.sqlConnection, table, dataFileName, createTablePolicy);
+        SQLHelper helper = new SQLHelper(sqlConnection, table, dataFileName, createTablePolicy);
         helper.setupTable();
     }
 
@@ -425,26 +424,7 @@ public class TableReference extends AbstractReference {
     // TODO add support for the ListDiff type
 
     protected SQLSession getSQLSession() throws DirectoryException {
-        if (!initialized) {
-            try (SQLSession sqlSession = (SQLSession) getSourceDirectory().getSession()) {
-                initialize(sqlSession);
-                initialized = true;
-            }
-        }
         return (SQLSession) getSourceDirectory().getSession();
-    }
-
-    /**
-     * Initialize if needed, using an existing session.
-     *
-     * @param sqlSession
-     * @throws DirectoryException
-     */
-    protected void maybeInitialize(SQLSession sqlSession) throws DirectoryException {
-        if (!initialized) {
-            initialize(sqlSession);
-            initialized = true;
-        }
     }
 
     public Table getTable() throws DirectoryException {

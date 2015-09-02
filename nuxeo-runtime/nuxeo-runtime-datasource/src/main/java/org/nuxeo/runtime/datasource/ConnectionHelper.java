@@ -801,6 +801,16 @@ public class ConnectionHelper {
      * @throws ResourceException
      */
     public static Connection getConnection(String dataSourceName, boolean noSharing) throws SQLException {
+        Connection connection =  acquireConnection(dataSourceName, noSharing);
+        boolean actual = connection.getAutoCommit();
+        boolean expected = TransactionHelper.isNoTransaction() ? true : false;
+        if (actual != expected) {
+            connection.setAutoCommit(expected);
+        }
+        return connection;
+    }
+
+    private static Connection acquireConnection(String dataSourceName, boolean noSharing) throws SQLException {
         if (!useSingleConnection(dataSourceName)) {
             DataSource ds = getDataSource(dataSourceName);
             if (ds instanceof PooledDataSource) {

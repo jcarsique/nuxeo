@@ -53,6 +53,14 @@ public class DataSourceComponent extends DefaultComponent {
 
     protected Context namingContext;
 
+    protected static DataSourceComponent self;
+
+    @Override
+    public void activate(ComponentContext context) {
+        self = this;
+    }
+
+
     @Override
     public void registerContribution(Object contrib, String extensionPoint, ComponentInstance component) {
         if (DATASOURCES_XP.equals(extensionPoint)) {
@@ -135,6 +143,7 @@ public class DataSourceComponent extends DefaultComponent {
         }
         datasources.clear();
         namingContext = null;
+        self = null;
     }
 
     protected void addDataSource(DataSourceDescriptor contrib) {

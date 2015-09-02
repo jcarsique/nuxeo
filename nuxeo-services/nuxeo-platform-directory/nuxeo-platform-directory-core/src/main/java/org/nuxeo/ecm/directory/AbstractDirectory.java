@@ -20,7 +20,6 @@
 package org.nuxeo.ecm.directory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -168,6 +167,11 @@ public abstract class AbstractDirectory implements Directory {
     @Override
     public boolean isMultiTenant() {
         return false;
+    }
+
+    @Override
+    public void startup() throws DirectoryException {
+        ;
     }
 
     @Override

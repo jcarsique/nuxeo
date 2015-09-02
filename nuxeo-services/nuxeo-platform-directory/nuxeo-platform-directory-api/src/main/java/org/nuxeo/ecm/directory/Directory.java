@@ -72,6 +72,11 @@ public interface Directory {
     String getPasswordField() throws DirectoryException;
 
     /**
+     * startup directory
+     */
+    void startup() throws DirectoryException;
+
+    /**
      * Shuts down the directory.
      *
      * @throws DirectoryException

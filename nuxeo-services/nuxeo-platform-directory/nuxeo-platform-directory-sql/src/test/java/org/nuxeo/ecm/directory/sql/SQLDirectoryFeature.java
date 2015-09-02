@@ -27,6 +27,7 @@ import org.junit.runners.model.FrameworkMethod;
 import org.nuxeo.ecm.core.api.DataModel;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.test.DefaultRepositoryInit;
+import org.nuxeo.ecm.core.test.TransactionalFeature;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
 import org.nuxeo.ecm.directory.Directory;
@@ -39,7 +40,6 @@ import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.SimpleFeature;
-
 import com.google.inject.Binder;
 import com.google.inject.Provider;
 import com.google.inject.name.Names;
@@ -47,7 +47,7 @@ import com.google.inject.name.Names;
 /**
  * @since 6.0
  */
-@Features({ ClientLoginFeature.class })
+@Features({ TransactionalFeature.class, ClientLoginFeature.class })
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
 @Deploy({ "org.nuxeo.ecm.directory.api", //
         "org.nuxeo.ecm.directory", //

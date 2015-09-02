@@ -24,10 +24,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -44,6 +46,7 @@ import org.nuxeo.ecm.directory.AbstractDirectory;
 import org.nuxeo.ecm.directory.Directory;
 import org.nuxeo.ecm.directory.DirectoryException;
 import org.nuxeo.ecm.directory.DirectoryServiceImpl;
+import org.nuxeo.ecm.directory.Reference;
 import org.nuxeo.ecm.directory.Session;
 import org.nuxeo.ecm.directory.api.DirectoryService;
 import org.nuxeo.runtime.RuntimeService;
@@ -110,8 +113,6 @@ public class SQLDirectory extends AbstractDirectory {
 
     private final boolean nativeCase;
 
-    private boolean managedSQLSession;
-
     private DataSource dataSource;
 
     private Table table;
@@ -139,12 +140,34 @@ public class SQLDirectory extends AbstractDirectory {
 
     }
 
+    @Override
+    public void startup() throws DirectoryException {
+        Transaction tx = TransactionHelper.suspendTransaction(); // should run auto-commit mode
+        try {
+            initialize();
+        } finally {
+            if (tx != null) {
+                TransactionHelper.resumeTransaction(tx);
+            }
+        }
+    }
+
+    @Override
+    public void shutdown() {
+        if (config.dataSourceName == null) {
+            DataSourceHelper.removeLink(config.name);
+        }
+        dataSource = null;
+        super.shutdown();
+    }
+
     /**
-     * Lazy init connection
+     * init directory
      *
      * @since 6.0
      */
-    protected void initConnection() {
+    protected void initialize() {
+        dataSource = lookupDataSource();
         Connection sqlConnection = getConnection();
         try {
             dialect = Dialect.createDialect(sqlConnection, null);
@@ -152,7 +175,8 @@ public class SQLDirectory extends AbstractDirectory {
             if (config.initDependencies != null) {
                 // initialize dependent directories first
                 final RuntimeService runtime = Framework.getRuntime();
-                DirectoryServiceImpl directoryService = (DirectoryServiceImpl) runtime.getComponent(DirectoryService.NAME);
+                DirectoryServiceImpl directoryService = (DirectoryServiceImpl) runtime.getComponent(
+                        DirectoryService.NAME);
                 for (String dependency : config.initDependencies) {
                     log.debug("initializing dependencies first: " + dependency);
                     Directory dir = directoryService.getDirectory(dependency);
@@ -193,25 +217,23 @@ public class SQLDirectory extends AbstractDirectory {
                         column.setNullable(false);
                         hasPrimary = true;
                     }
+                } else {
+                    for (Reference ref : references.get(fieldName)) {
+                        if (ref instanceof TableReference) {
+                            ((TableReference) ref).initialize(sqlConnection);
+                        }
+                    }
                 }
             }
             if (!hasPrimary) {
-                throw new DirectoryException(String.format(
-                        "Directory '%s' id field '%s' is not present in schema '%s'", getName(), getIdField(),
-                        getSchema()));
+                throw new DirectoryException(String.format("Directory '%s' id field '%s' is not present in schema '%s'",
+                        getName(), getIdField(), getSchema()));
             }
 
             SQLHelper helper = new SQLHelper(sqlConnection, table, config.dataFileName,
                     config.getDataFileCharacterSeparator(), config.createTablePolicy);
             helper.setupTable();
 
-            try {
-                if (!managedSQLSession) {
-                    sqlConnection.commit();
-                }
-            } catch (SQLException e) {
-                throw new DirectoryException(e);
-            }
         } finally {
             try {
                 sqlConnection.close();
@@ -226,24 +248,23 @@ public class SQLDirectory extends AbstractDirectory {
         return config;
     }
 
-    /** DO NOT USE, use getConnection() instead. */
-    protected DataSource getDataSource() throws DirectoryException {
-        if (dataSource != null) {
-            return dataSource;
-        }
+    protected DataSource lookupDataSource() throws DirectoryException {
         try {
             if (!StringUtils.isEmpty(config.dataSourceName)) {
-                managedSQLSession = true;
-                dataSource = DataSourceHelper.getDataSource(config.dataSourceName);
-                // InitialContext context = new InitialContext();
-                // dataSource = (DataSource)
-                // context.lookup(config.dataSourceName);
+                return DataSourceHelper.getDataSource(config.dataSourceName);
             } else {
-                managedSQLSession = false;
-                dataSource = new SimpleDataSource(config.dbUrl, config.dbDriver, config.dbUser, config.dbPassword);
+                String dataSourceName = Framework.expandVars(config.dbUrl);
+                try {
+                    DataSourceHelper.getDataSource(dataSourceName);
+                } catch (NameNotFoundException cause) {
+                    synchronized (this) {
+                        DataSourceHelper.addDataSource(dataSourceName, config.dbUrl, config.dbDriver,
+                                config.dbUser, config.dbPassword);
+                    }
+                }
+                DataSourceHelper.addLink(config.name, dataSourceName);
+                return DataSourceHelper.getDataSource(config.name);
             }
-            log.trace("found datasource: " + dataSource);
-            return dataSource;
         } catch (NamingException e) {
             log.error("dataSource lookup failed", e);
             throw new DirectoryException("dataSource lookup failed", e);
@@ -252,15 +273,7 @@ public class SQLDirectory extends AbstractDirectory {
 
     public Connection getConnection() throws DirectoryException {
         try {
-            if (!StringUtils.isEmpty(config.dataSourceName)) {
-                // try single-datasource non-XA mode
-                Connection connection = ConnectionHelper.getConnection(config.dataSourceName);
-                if (connection != null) {
-                    managedSQLSession = true;
-                    return connection;
-                }
-            }
-            return getConnection(getDataSource());
+            return dataSource.getConnection();
         } catch (SQLException e) {
             throw new DirectoryException("Cannot connect to SQL directory '" + getName() + "': " + e.getMessage(), e);
         }
@@ -304,16 +317,13 @@ public class SQLDirectory extends AbstractDirectory {
     }
 
     @Override
-    public synchronized Session getSession() throws DirectoryException {
-        if (dialect == null) {
-            initConnection();
-        }
-        SQLSession session = new SQLSession(this, config, managedSQLSession);
+    public Session getSession() throws DirectoryException {
+        SQLSession session = new SQLSession(this, config);
         addSession(session);
         return session;
     }
 
-    protected synchronized void addSession(final SQLSession session) throws DirectoryException {
+    protected void addSession(final SQLSession session) throws DirectoryException {
         super.addSession(session);
         registerInTx(session);
     }

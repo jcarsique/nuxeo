@@ -4,19 +4,17 @@ import javax.inject.Inject;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nuxeo.ecm.core.test.CoreFeature;
-import org.nuxeo.ecm.core.test.annotations.TransactionalConfig;
 import org.nuxeo.ecm.directory.Directory;
 import org.nuxeo.ecm.directory.DirectoryException;
 import org.nuxeo.ecm.directory.Session;
 import org.nuxeo.ecm.directory.api.DirectoryService;
 import org.nuxeo.runtime.api.Framework;
-import org.nuxeo.runtime.datasource.ConnectionHelper;
-import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.LocalDeploy;
@@ -25,13 +23,10 @@ import org.nuxeo.runtime.test.runner.LogCaptureFeature.NoLogCaptureFilterExcepti
 import org.nuxeo.runtime.transaction.TransactionHelper;
 
 @RunWith(FeaturesRunner.class)
-@Features({ LogCaptureFeature.class, CoreFeature.class })
-@Deploy({ "org.nuxeo.ecm.core.schema", "org.nuxeo.ecm.core.api", "org.nuxeo.ecm.core", "org.nuxeo.ecm.directory",
-        "org.nuxeo.ecm.directory.sql" })
+@Features({ LogCaptureFeature.class, CoreFeature.class, SQLDirectoryFeature.class })
 @LocalDeploy({ "org.nuxeo.ecm.directory:test-sql-directories-schema-override.xml",
         "org.nuxeo.ecm.directory.sql:test-sql-directories-bundle.xml" })
 @LogCaptureFeature.FilterWith(TestSessionsAreClosedAutomatically.CloseSessionFilter.class)
-@TransactionalConfig(autoStart = false)
 public class TestSessionsAreClosedAutomatically {
 
     public static class CloseSessionFilter implements LogCaptureFeature.Filter {
@@ -58,55 +53,55 @@ public class TestSessionsAreClosedAutomatically {
     protected @Inject LogCaptureFeature.Result caughtEvents;
 
     @Before
-    public void setSingleDataSourceMode() {
-        Framework.getProperties().setProperty(ConnectionHelper.SINGLE_DS, "jdbc/NuxeoTestDS");
-    }
-
-    @Before
     public void fetchUserDirectory() throws DirectoryException {
         userDirectory = Framework.getService(DirectoryService.class).getDirectory("userDirectory");
         Assert.assertNotNull(userDirectory);
     }
 
+    @Before
+    public void resetContext() {
+        TransactionHelper.commitOrRollbackTransaction();
+    }
+
+    @After
+    public void restoreContext() {
+        if (TransactionHelper.isNoTransaction()) {
+            TransactionHelper.startTransaction();
+        }
+    }
+
     @Test
     public void hasNoWarns() throws DirectoryException, NoLogCaptureFilterException {
-        boolean started = TransactionHelper.startTransaction();
-
+        TransactionHelper.startTransaction();
         try {
             try (Session session = userDirectory.getSession()) {
                 // do nothing
             }
         } finally {
-            if (started) {
-                TransactionHelper.commitOrRollbackTransaction();
-            }
+            TransactionHelper.commitOrRollbackTransaction();
         }
         Assert.assertTrue(caughtEvents.getCaughtEvents().isEmpty());
     }
 
     @Test
     public void hasWarnsOnCommit() throws DirectoryException, NoLogCaptureFilterException {
-        boolean started = TransactionHelper.startTransaction();
+        TransactionHelper.startTransaction();
         try {
             Session session = userDirectory.getSession();
         } finally {
-            if (started) {
-                TransactionHelper.commitOrRollbackTransaction();
-            }
+            TransactionHelper.commitOrRollbackTransaction();
         }
         caughtEvents.assertHasEvent();
     }
 
     @Test
     public void hasWarnsOnRollback() throws DirectoryException, NoLogCaptureFilterException {
-        boolean started = TransactionHelper.startTransaction();
+        TransactionHelper.startTransaction();
         try {
             Session session = userDirectory.getSession();
         } finally {
-            if (started) {
-                TransactionHelper.setTransactionRollbackOnly();
-                TransactionHelper.commitOrRollbackTransaction();
-            }
+            TransactionHelper.setTransactionRollbackOnly();
+            TransactionHelper.commitOrRollbackTransaction();
         }
         caughtEvents.assertHasEvent();
     }

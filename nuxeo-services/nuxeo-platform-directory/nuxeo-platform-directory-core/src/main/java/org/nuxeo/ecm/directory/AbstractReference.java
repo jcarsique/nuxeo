@@ -29,56 +29,42 @@ import org.nuxeo.runtime.api.Framework;
  */
 public abstract class AbstractReference implements Reference {
 
-    protected DirectoryServiceImpl directoryService;
-
     protected String sourceDirectoryName;
-
-    protected Directory sourceDirectory;
 
     protected String targetDirectoryName;
 
-    protected Directory targetDirectory;
-
     protected String fieldName;
 
+    @Override
     public String getFieldName() {
         return fieldName;
     }
 
+    @Override
     public Directory getSourceDirectory() throws DirectoryException {
-        if (sourceDirectory == null) {
-            sourceDirectory = getDirectoryService().getDirectory(sourceDirectoryName);
-        }
-        return sourceDirectory;
+        return Framework.getService(DirectoryService.class).getDirectory(sourceDirectoryName);
     }
 
+    @Override
     public void setSourceDirectoryName(String sourceDirectoryName) {
-        sourceDirectory = null;
         this.sourceDirectoryName = sourceDirectoryName;
     }
 
+    @Override
     public Directory getTargetDirectory() throws DirectoryException {
-        if (targetDirectory == null) {
-            targetDirectory = getDirectoryService().getDirectory(targetDirectoryName);
-        }
-        return targetDirectory;
+        return Framework.getService(DirectoryService.class).getDirectory(targetDirectoryName);
     }
 
+    @Override
     public void setTargetDirectoryName(String targetDirectoryName) {
-        targetDirectory = null;
         this.targetDirectoryName = targetDirectoryName;
     }
 
-    protected DirectoryServiceImpl getDirectoryService() {
-        if (directoryService == null) {
-            directoryService = (DirectoryServiceImpl) Framework.getRuntime().getComponent(DirectoryService.NAME);
-        }
-        return directoryService;
-    }
 
     /**
      * @since 5.6
      */
+    @Override
     public AbstractReference clone() {
         AbstractReference clone = newInstance();
         clone.sourceDirectoryName = sourceDirectoryName;

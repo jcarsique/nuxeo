@@ -27,5 +27,5 @@
     <object
       class="org.nuxeo.ecm.platform.query.core.PageProviderClassReplacerDescriptor" />
   </extension-point>
-
+  
 </component>

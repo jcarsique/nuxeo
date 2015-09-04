@@ -30,7 +30,6 @@ import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.Filter;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.SortInfo;
-import org.nuxeo.ecm.core.query.QueryParseException;
 import org.nuxeo.ecm.platform.query.api.AbstractPageProvider;
 import org.nuxeo.ecm.platform.query.api.PageProviderDefinition;
 import org.nuxeo.ecm.platform.query.api.PageSelections;
@@ -211,6 +210,10 @@ public class CoreQueryDocumentPageProvider extends AbstractPageProvider<Document
                 log.warn(e.getMessage(), e);
             }
         }
+
+        // send event for statistics !
+        fireSearchEvent(getCoreSession().getPrincipal(), query, currentPageDocuments);
+
         return currentPageDocuments;
     }
 

@@ -98,6 +98,9 @@ public class CoreQueryDocumentPageProvider extends AbstractPageProvider<Document
 
     @Override
     public List<DocumentModel> getCurrentPage() {
+
+        long t0 = System.currentTimeMillis();
+
         checkQueryCache();
         if (currentPageDocuments == null) {
             error = null;
@@ -212,7 +215,7 @@ public class CoreQueryDocumentPageProvider extends AbstractPageProvider<Document
         }
 
         // send event for statistics !
-        fireSearchEvent(getCoreSession().getPrincipal(), query, currentPageDocuments);
+        fireSearchEvent(getCoreSession().getPrincipal(), query, currentPageDocuments, System.currentTimeMillis()-t0);
 
         return currentPageDocuments;
     }

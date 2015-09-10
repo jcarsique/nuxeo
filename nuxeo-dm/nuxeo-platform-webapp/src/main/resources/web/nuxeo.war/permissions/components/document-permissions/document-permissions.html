@@ -11,7 +11,35 @@
 
 <dom-module id="document-permissions">
     <template>
-        <nx-doc-resource id="doc" auto="true" doc-id="{{docId}}" doc-path="{{docPath}}" response="{{doc}}"
+        <style>
+        .acl-table {
+          display: table;
+          border-collapse: collapse;
+          width: 100%;
+          line-height: 1.3em;
+        }
+
+        .acl-table-row {
+          display: table-row;
+        }
+
+        .acl-table-headers {
+          display: table-row;
+        }
+
+        .acl-table-row > div {
+          display: table-cell;
+          border: 1px solid #e7e7e7;
+          padding: .6em .4em;
+          color: #000;
+        }
+
+        .acl-table-headers > div {
+          background-color: #f8f9fb;
+          font-weight: bold;
+        }
+        </style>
+        <nx-doc-resource id="doc" auto doc-id="{{docId}}" doc-path="{{docPath}}" response="{{doc}}"
             enrichers="extendedAcls, permissions, userVisiblePermissions"></nx-doc-resource>
 
         <div class="bubbleBox">
@@ -24,36 +52,36 @@
             </div>
             <template is="dom-if" if="{{hasLocalAcls}}">
                 <div>
-                    <table class="dataTable tmp-tab">
-                        <tr class="tmp-tab">
-                            <th class="tmp-tab">Username</th>
-                            <th class="tmp-tab">Creator</th>
-                            <th class="tmp-tab">Permission</th>
-                            <th class="tmp-tab">Duration</th>
-                            <th class="tmp-tab">Policy name</th>
-                            <th class="tmp-tab">Actions</th>
-                        </tr>
+                    <div class="acl-table">
+                        <div class="acl-table-row acl-table-headers">
+                            <div>Username</th>
+                            <div>Creator</th>
+                            <div>Permission</th>
+                            <div>Duration</th>
+                            <div>Policy name</th>
+                            <div>Actions</th>
+                        </div>
                         <template is="dom-repeat" items="{{localAcls}}" as="acl">
                             <template is="dom-repeat" items="{{acl.ace}}" as="ace">
                                 <template is="dom-if" if="{{ace.granted}}">
-                                    <tr>
-                                        <td><span>{{ace.username}}</span></td>
-                                        <td><span>{{ace.creator}}</span></td>
-                                        <td><span>{{ace.permission}}</span></td>
-                                        <td><span>{{formatDuration(ace)}}</span></td>
-                                        <td><span>{{acl.name}}</span></td>
-                                        <td>
+                                    <div class="acl-table-row">
+                                        <div><span>{{ace.username}}</span></div>
+                                        <div><span>{{ace.creator}}</span></div>
+                                        <div><span>{{ace.permission}}</span></div>
+                                        <div><span>{{formatDuration(ace)}}</span></div>
+                                        <div><span>{{acl.name}}</span></div>
+                                        <div>
                                             <template is="dom-if" if="{{hasEverythingRight}}">
                                                 <popup-permission doc-id="{{doc.uid}}" ace="{{ace}}" user-visible-permissions="{{doc.contextParameters.userVisiblePermissions}}"
                                                     on-aceupdated="refresh"></popup-permission>
                                                 <paper-icon-button icon="delete" on-click="localRightsDel" raised="true"></paper-icon-button>
                                             </template>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </div>
                                 </template>
                             </template>
                         </template>
-                    </table>
+                    </div>
                 </div>
             </template>
             <template is="dom-if" if="{{!hasLocalAcls}}">
@@ -68,24 +96,24 @@
                     <paper-button raised="true" on-click="blockInheritance">Block inheritance</paper-button>
                 </div>
                 <div>
-                    <table class="dataTable tmp-tab">
-                        <tr class="tmp-tab">
-                            <th class="tmp-tab">Username</th>
-                            <th class="tmp-tab">Creator</th>
-                            <th class="tmp-tab">Permission</th>
-                            <th class="tmp-tab">Duration</th>
-                        </tr>
+                    <div class="acl-table">
+                        <div class="acl-table-row acl-table-headers">
+                            <div>Username</div>
+                            <div>Creator</div>
+                            <div>Permission</div>
+                            <div>Duration</div>
+                        </div>
                         <template is="dom-repeat" items="{{inheritedAcls}}" as="acl">
                             <template is="dom-repeat" items="{{acl.ace}}" as="ace">
-                                <tr>
-                                    <td><span>{{ace.username}}</span></td>
-                                    <td><span>{{ace.creator}}</span></td>
-                                    <td><span>{{ace.permission}}</span></td>
-                                    <td><span>{{formatDuration(ace)}}</span></td>
-                                </tr>
+                                <div class="acl-table-row">
+                                    <div><span>{{ace.username}}</span></div>
+                                    <div><span>{{ace.creator}}</span></div>
+                                    <div><span>{{ace.permission}}</span></div>
+                                    <div><span>{{formatDuration(ace)}}</span></div>
+                                </div>
                             </template>
                         </template>
-                    </table>
+                    </div>
                 </div>
             </div>
         </template>
@@ -159,7 +187,7 @@
         },
 
         refresh: function() {
-            document.querySelector('#doc').get();
+            this.$.doc.get();
         },
 
         formatDuration: function(ace) {
@@ -191,18 +219,25 @@
             });
         },
 
-        computeEverythingRight: function(doc) {
-            if (doc) {
-                return doc.contextParameters.permissions.indexOf('Everything') !== -1;
+        get permissions() {
+            return this.doc && this.doc.contextParameters && this.doc.contextParameters.permissions;
+        },
+
+        computeEverythingRight: function() {
+            if (this.permissions) {
+                return this.permissions.indexOf('Everything') !== -1;
             }
             return false;
         },
 
-        computeHasLocalAcls: function(doc) {
-            if (doc) {
-                var acls = doc.contextParameters.acls;
-                for (var i = 0; i < acls.length; i++) {
-                    if (acls[i].name !== 'inherited' && acls.length >= 1) {
+        get acls() {
+            return this.doc && this.doc.contextParameters && this.doc.contextParameters.acls;
+        },
+
+        computeHasLocalAcls: function() {
+            if (this.acls) {
+                for (var i = 0; i < this.acls.length; i++) {
+                    if (this.acls[i].name !== 'inherited' && this.acls.length >= 1) {
                         return true;
                     }
                 }
@@ -210,11 +245,10 @@
             return false;
         },
 
-        computeHasInheritedAcls: function(doc) {
-            if (doc) {
-                var acls = doc.contextParameters.acls;
-                for (var i = 0; i < acls.length; i++) {
-                    if (acls[i].name === 'inherited') {
+        computeHasInheritedAcls: function() {
+            if (this.acls) {
+                for (var i = 0; i < this.acls.length; i++) {
+                    if (this.acls[i].name === 'inherited') {
                         return true;
                     }
                 }
@@ -222,25 +256,23 @@
             return false;
         },
 
-        computeLocalAcls: function(doc) {
+        computeLocalAcls: function() {
             var localAcls = [];
-            if (doc) {
-                var acls = doc.contextParameters.acls;
-                for (var i = 0; i < acls.length; i++) {
-                    if (acls[i].name !== 'inherited') {
-                        localAcls.push(acls[i]);
+            if (this.acls) {
+                for (var i = 0; i < this.acls.length; i++) {
+                    if (this.acls[i].name !== 'inherited') {
+                        localAcls.push(this.acls[i]);
                     }
                 }
             }
             return localAcls;
         },
 
-        computeInheritedAcls: function(doc) {
-            if (doc) {
-                var acls = doc.contextParameters.acls;
-                for (var i = 0; i < acls.length; i++) {
-                    if (acls[i].name === 'inherited') {
-                        return [acls[i]];
+        computeInheritedAcls: function() {
+            if (this.acls) {
+                for (var i = 0; i < this.acls.length; i++) {
+                    if (this.acls[i].name === 'inherited') {
+                        return [this.acls[i]];
                     }
                 }
             }

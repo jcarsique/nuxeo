@@ -32,3 +32,4 @@ marketplace
 nuxeo-webengine/nuxeo-webengine-gwt/war/
 nashorn_code_cache/
 bower_components
+node_modules

@@ -244,6 +244,12 @@
         <processor>flavor</processor>
       </processors>
     </resource>
+    <resource name="sass_app.scss" type="css">
+      <path>themes/sass/app.scss</path>
+      <processors>
+        <processor>sassCss</processor>
+      </processors>
+    </resource>
     <resource name="breadcrumb.css">
       <path>themes/css/breadcrumb.css</path>
       <processors>
@@ -429,6 +435,12 @@
       </resources>
     </bundle>
 
+    <bundle name="nuxeo_includes_sassCss">
+      <resources>
+        <resource>sass_app.scss</resource>
+      </resources>
+    </bundle>
+
     <!-- styling common to all basic pages -->
     <bundle name="nuxeo_base">
       <resources>
@@ -501,6 +513,7 @@
       </flavors>
       <resources>
         <bundle>nuxeo_includes</bundle>
+        <bundle>nuxeo_includes_sassCss</bundle>
         <bundle>nuxeo_base</bundle>
         <bundle>nuxeo_dm</bundle>
       </resources>
@@ -544,6 +557,9 @@
           <color>#e6f1ff</color>
         </colors>
       </palettePreview>
+      <sass>
+        <import src="themes/palettes/default_variables.scss" />
+      </sass>
     </flavor>
 
     <flavor name="rainbow">
@@ -579,6 +595,9 @@
           <color>#feffe6</color>
         </colors>
       </palettePreview>
+      <sass>
+        <import src="themes/palettes/rainbow_variables.scss" />
+      </sass>
     </flavor>
 
   </extension>

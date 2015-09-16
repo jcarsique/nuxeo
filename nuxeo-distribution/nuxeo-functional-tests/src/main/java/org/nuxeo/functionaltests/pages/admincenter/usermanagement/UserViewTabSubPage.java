@@ -72,7 +72,7 @@ public class UserViewTabSubPage extends UsersGroupsBasePage {
     }
 
     public UsersTabSubPage backToTheList() {
-        findElementWaitUntilEnabledAndClick(By.linkText("Back to the list"));
+        findElementWaitUntilEnabledAndClick(By.linkText("Back to the List"));
         return asPage(UsersTabSubPage.class);
     }
 

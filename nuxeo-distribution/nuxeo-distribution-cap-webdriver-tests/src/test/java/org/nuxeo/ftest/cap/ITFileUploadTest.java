@@ -110,7 +110,7 @@ public class ITFileUploadTest extends AbstractTest {
                 ".txt", "Webdriver test file content.");
 
         // Check validation error
-        assertEquals("Value is required", creationPageAfterError.getTitleMessage());
+        assertEquals("Value is required.", creationPageAfterError.getTitleMessage());
 
         // Check file is still there and filename is present
         assertEquals("tempKeep", creationPageAfterError.getSelectedOption());

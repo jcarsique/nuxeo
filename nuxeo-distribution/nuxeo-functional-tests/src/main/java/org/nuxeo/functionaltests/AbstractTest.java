@@ -161,7 +161,7 @@ public abstract class AbstractTest {
     public static final String NUXEO_URL = System.getProperty("nuxeoURL", "http://localhost:8080/nuxeo").replaceAll(
             "/$", "");
 
-    public static final int LOAD_TIMEOUT_SECONDS = 30;
+    public static final int LOAD_TIMEOUT_SECONDS = 5;
 
     public static final int LOAD_SHORT_TIMEOUT_SECONDS = 2;
 

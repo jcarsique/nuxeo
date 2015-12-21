@@ -100,7 +100,7 @@
         </div>
       </template>
       <template is="dom-if" if="{{!hasLocalAces}}">
-        <p class="emptyResult">[[i18n('label.permissions.noLocalPermissions', 'No local permission.')]]</p>
+        <p class="emptyResult">[[i18n('label.permissions.noLocalPermissions', 'There is no local permission.')]]</p>
       </template>
     </div>
 
@@ -153,13 +153,16 @@
 
     <div class="bubbleBox">
       <div class="bubbleHeader">
-        <h3>[[i18n('label.permissions.externalSharing', 'External Sharing')]]</h3>
+        <h3>[[i18n('label.permissions.external', 'Permissions Assigned to External Users')]]</h3>
         <template is="dom-if" if="{{hasEverythingRight}}">
           <popup-permission doc-id="{{doc.uid}}"
             user-visible-permissions="{{doc.contextParameters.userVisiblePermissions}}"
             share-with-external="true"
             on-acecreated="onACECreated"></popup-permission>
         </template>
+      </div>
+      <div class="tips">
+        [[i18n('label.permissions.externalDescription', 'Sharing to external users does not create new user accounts. External users are provided a link to access this document.')]]
       </div>
       <template is="dom-if" if="{{hasExternalAces}}">
         <div>
@@ -220,7 +223,7 @@
         </div>
       </template>
       <template is="dom-if" if="{{!hasExternalAces}}">
-        <p class="emptyResult">[[i18n('label.permissions.noExternalSharing', 'No external sharing.')]]</p>
+        <p class="emptyResult">[[i18n('label.permissions.noExternalPermission', 'The document is not shared with any external user.')]]</p>
       </template>
     </div>
 

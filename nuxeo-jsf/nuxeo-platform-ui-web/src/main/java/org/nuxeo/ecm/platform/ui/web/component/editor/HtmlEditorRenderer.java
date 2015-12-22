@@ -60,17 +60,28 @@ public class HtmlEditorRenderer extends HtmlBasicInputRenderer {
         ResponseWriter writer = context.getResponseWriter();
         Locale locale = context.getViewRoot().getLocale();
 
-        // tiny MCE generic scripts now included in every page header
-
+        // tiny MCE generic scripts are now included in every page header, only adding
         // script to actually init tinyMCE with configured options
-        String editorSelector = editorComp.getEditorSelector();
-        // plugins registration
-        if (pluginsOptions == null) {
-            final HtmlEditorPluginService pluginService = Framework.getLocalService(HtmlEditorPluginService.class);
-            pluginsOptions = new HashMap<String, String>();
-            pluginsOptions.put("plugins", pluginService.getFormattedPluginsNames());
-            toolbarPluginsOptions = new HashMap<String, String>();
-            toolbarPluginsOptions.put("toolbar", pluginService.getFormattedToolbarsButtonsNames());
+        String compPlugins = editorComp.getPlugins();
+        String compToolbar = editorComp.getToolbar();
+
+        if (StringUtils.isEmpty(compPlugins)) {
+            // fallback on generic conf
+            if (pluginsOptions == null) {
+                final HtmlEditorPluginService pluginService = Framework.getLocalService(HtmlEditorPluginService.class);
+                pluginsOptions = new HashMap<String, String>();
+                pluginsOptions.put("plugins", pluginService.getFormattedPluginsNames());
+            }
+            compPlugins = pluginsOptions.get("plugins");
+        }
+        if (StringUtils.isEmpty(compToolbar)) {
+            // fallback on generic conf
+            if (toolbarPluginsOptions == null) {
+                final HtmlEditorPluginService pluginService = Framework.getLocalService(HtmlEditorPluginService.class);
+                toolbarPluginsOptions = new HashMap<String, String>();
+                toolbarPluginsOptions.put("toolbar", pluginService.getFormattedToolbarsButtonsNames());
+            }
+            compToolbar = toolbarPluginsOptions.get("toolbar");
         }
 
         String clientId = editorComp.getClientId(context);
@@ -80,6 +91,7 @@ public class HtmlEditorRenderer extends HtmlBasicInputRenderer {
         writer.startElement("textarea", editorComp);
         writer.writeAttribute("id", clientId, null);
         writer.writeAttribute("name", clientId, null);
+        String editorSelector = editorComp.getEditorSelector();
         if (Boolean.TRUE.equals(editorComp.getDisableHtmlInit())) {
             writer.writeAttribute("class", editorSelector + ",disableMCEInit", null);
         } else {
@@ -109,11 +121,11 @@ public class HtmlEditorRenderer extends HtmlBasicInputRenderer {
                                                       .append(", '")
                                                       .append(clientId)
                                                       .append("', '")
-                                                      .append(pluginsOptions.get("plugins"))
+                                                      .append(compPlugins)
                                                       .append("', '")
                                                       .append(locale.getLanguage())
                                                       .append("', '")
-                                                      .append(toolbarPluginsOptions.get("toolbar"))
+                                                      .append(compToolbar)
                                                       .append("');")
                                                       .toString();
             writer.writeText(scriptContent, null);

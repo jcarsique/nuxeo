@@ -1,6 +1,15 @@
 var nbTinyMceEditor = 0;
 
 function initTinyMCE(width, height, eltId, plugins, lang, toolbar) {
+  // BBB
+  var toolbar1 = "bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | formatselect fontselect fontsizeselect";
+  var toolbar2 = "paste pastetext searchreplace | bullist numlist | outdent indent | undo redo | link unlink anchor image code";
+  var toolbar3 = "table | hr removeformat visualchars | subscript superscript | charmap preview | " + toolbar;
+  initTinyMCE(width, height, eltId, plugins, lang, toolbar1, toolbar2, toolbar3);
+}
+
+// @since 8.1
+function initTinyMCE(width, height, eltId, plugins, lang, toolbar1, toolbar2, toolbar3) {
   var loaded = false;
   var $el = jQuery(document.getElementById(eltId));
   if ($el.hasClass("disableMCEInit")) {
@@ -34,24 +43,23 @@ function initTinyMCE(width, height, eltId, plugins, lang, toolbar) {
 
   nbTinyMceEditor++;
 
-  tinyMCE
-      .init({
+  tinyMCE.init({
         width : width,
         height : height,
         mode : "exact",
         theme : "modern",
         elements : eltId,
-        plugins : ["link image code searchreplace paste visualchars charmap table fullscreen preview nuxeoimageupload nuxeolink"],
+        plugins : ["link image code searchreplace paste visualchars charmap table preview " + plugins],
         language : lang,
 
         // Img insertion fixes
         relative_urls : false,
         remove_script_host : false,
 
-        toolbar1 : "bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | formatselect fontselect fontsizeselect",
-        toolbar2 : "paste pastetext searchreplace | bullist numlist | outdent indent | undo redo | link unlink anchor image code",
-        toolbar3 : "table | hr removeformat visualchars | subscript superscript | charmap preview | fullscreen nuxeoimageupload nuxeolink",
-        menubar: false,
+        toolbar1 : toolbar1,
+        toolbar2 : toolbar2,
+        toolbar3 : toolbar3,
+        menubar : false,
         
         // TODO : upgrade the skin "o2k7" with the new version
         /*skin : "o2k7",

@@ -1700,6 +1700,25 @@
         editor). Available since 5.3.1.
       </description>
     </attribute>
+    <attribute>
+      <name>plugins</name>
+      <required>false</required>
+      <type>java.lang.String</type>
+      <description>
+        List of plugins to use on the editor, if not filled, defaults to contributions
+        to the runtime service named HtmlEditorPluginService. Available since 8.1.
+      </description>
+    </attribute>
+    <attribute>
+      <name>toolbar</name>
+      <required>false</required>
+      <type>java.lang.String</type>
+      <description>
+        List of toolbar items to display on the editor, if not filled, defaults to contributions
+        to the runtime service named HtmlEditorPluginService. Only impact the third toolbar.
+        Available since 8.1.
+      </description>
+    </attribute>
   </tag>
 
   <tag>

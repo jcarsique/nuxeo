@@ -39,7 +39,7 @@ public class UIHtmlEditor extends HtmlInputText {
 
     // attributes TODO: add more.
     protected enum PropertyKeys {
-        width, height, cols, rows, editorSelector, disableHtmlInit;
+        width, height, cols, rows, editorSelector, disableHtmlInit, plugins, toolbar;
     }
 
     // setters & getters
@@ -90,6 +90,34 @@ public class UIHtmlEditor extends HtmlInputText {
 
     public void setEditorSelector(String editorSelector) {
         getStateHelper().put(PropertyKeys.editorSelector, editorSelector);
+    }
+
+    /**
+     * @since 8.1
+     */
+    public String getPlugins() {
+        return (String) getStateHelper().eval(PropertyKeys.plugins);
+    }
+
+    /**
+     * @since 8.1
+     */
+    public void setPlugins(String plugins) {
+        getStateHelper().put(PropertyKeys.plugins, plugins);
+    }
+
+    /**
+     * @since 8.1
+     */
+    public String getToolbar() {
+        return (String) getStateHelper().eval(PropertyKeys.toolbar);
+    }
+
+    /**
+     * @since 8.1
+     */
+    public void setToolbar(String toolbar) {
+        getStateHelper().put(PropertyKeys.toolbar, toolbar);
     }
 
 }

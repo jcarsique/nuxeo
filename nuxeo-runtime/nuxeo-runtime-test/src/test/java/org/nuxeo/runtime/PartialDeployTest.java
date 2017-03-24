@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.Collections;
 
 import org.junit.Test;
-import org.nuxeo.runtime.model.ComponentInstance;
 import org.nuxeo.runtime.model.ComponentName;
 import org.nuxeo.runtime.model.RegistrationInfo;
 import org.nuxeo.runtime.model.StreamRef;
@@ -42,12 +41,12 @@ public class PartialDeployTest extends NXRuntimeTestCase {
         String partial = name + "-partial";
         StreamRef compRef = new URLStreamRef(getResource("MyComp4.xml"));
 
-        assertNull(getComponent(name));
-        assertNull(getComponent(partial));
+        assertNull(runtime.getComponent(name));
+        assertNull(runtime.getComponent(partial));
 
         deployPartialComponent(getContext(), Collections.emptySet(), compRef);
-        assertNull(getComponent(name));
-        assertNotNull(getComponent(partial));
+        assertNull(runtime.getComponent(name));
+        assertNotNull(runtime.getComponent(partial));
         assertNumberOfExtensionsEquals(0, partial);
     }
 
@@ -57,8 +56,8 @@ public class PartialDeployTest extends NXRuntimeTestCase {
         String partial = name + "-partial";
         StreamRef compRef = new URLStreamRef(getResource("MyComp4.xml"));
 
-        assertNull(getComponent(name));
-        assertNull(getComponent(partial));
+        assertNull(runtime.getComponent(name));
+        assertNull(runtime.getComponent(partial));
 
         TargetExtensions te = new TargetExtensions() {
             @Override
@@ -68,21 +67,14 @@ public class PartialDeployTest extends NXRuntimeTestCase {
         };
         deployPartialComponent(getContext(), Collections.singleton(te), compRef);
 
-        assertNull(getComponent(name));
-        assertNotNull(getComponent(partial));
+        assertNull(runtime.getComponent(name));
+        assertNotNull(runtime.getComponent(partial));
         assertNumberOfExtensionsEquals(1, partial);
     }
 
     protected void assertNumberOfExtensionsEquals(int length, String name) {
-        RegistrationInfo ri = runtime.getComponentManager().getRegistrationInfo(toCompName(name));
+        RegistrationInfo ri = runtime.getComponentManager().getRegistrationInfo(new ComponentName(name));
         assertEquals(length, ri.getExtensions().length);
     }
 
-    protected ComponentInstance getComponent(String name) {
-        return (ComponentInstance) runtime.getComponent(toCompName(name));
-    }
-
-    protected ComponentName toCompName(String name) {
-        return new ComponentName(name);
-    }
 }

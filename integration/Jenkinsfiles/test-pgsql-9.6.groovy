@@ -38,7 +38,7 @@ timeout(time: 2, unit: 'HOURS') {
             stage 'tests' {
                 sh """#!/bin/bash -xe
                     docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER pull
-                    docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --build --exit-code-from tests db
+                    docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --build --abort-on-container-exit tests db
                 """
             }
 

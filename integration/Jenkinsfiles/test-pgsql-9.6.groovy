@@ -29,15 +29,34 @@ timeout(time: 2, unit: 'HOURS') {
                     ./clone.py $BRANCH -f $PARENT_BRANCH
                 """
 
-            stage 'tests'
-                sh """#!/bin/bash -xe
-                    docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER pull
-                    docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
+            try {
+                stage 'tests'
+                    sh """#!/bin/bash -x
+                        docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
+                        docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --build --abort-on-container-exit db tests
+                    """
+                // setBuildStatus("Build complete", "SUCCESS");
+            } finally {
+                archive '**/target/failsafe-reports/*, **/target/*.png, **/target/**/*.log, **/target/**/log/*'
+                junit '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml, **/target/failsafe-reports/**/*.xml'
+                // missing Claim plugin
+                // emailext body: '$DEFAULT_CONTENT', recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'CulpritsRecipientProvider'], [$class: 'RequesterRecipientProvider']], replyTo: '$DEFAULT_RECIPIENTS', subject: '$DEFAULT_SUBJECT', to: '$DEFAULT_RECIPIENTS,ecm-qa@lists.nuxeo.com'
+                emailext body: '$DEFAULT_CONTENT', replyTo: '$DEFAULT_RECIPIENTS', subject: '$DEFAULT_SUBJECT', to: 'jcarsique@nuxeo.com'
+                // missing Jabber plugin
+                sh """#!/bin/bash -x
+                    docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml down
                 """
-
-            stage 'results'
-                step([$class: 'ArtifactArchiver', artifacts: '**/target/failsafe-reports/*, **/target/*.png, **/target/**/*.log, **/target/**/log/*', fingerprint: false])
-                step([$class: 'JUnitResultArchiver', testResults: '**/target/failsafe-reports/*.xml'])
+            }
         }
     }
+}
+
+void setBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+//      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/my-org/my-repo"],
+//      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
 }

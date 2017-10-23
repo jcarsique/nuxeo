@@ -36,4 +36,4 @@ services:
 #      - NX_DB_USER=nuxeo
 #      - NX_MONGODB_DBNAME=dbtest
       - NX_MONGODB_SERVER=db:27017
-    command: mvn -f $WORKSPACE/pom.xml install -Pqa,addons,customdb,mongodb -Dmaven.test.failure.ignore=true -Dnuxeo.tests.random.mode=STRICT
+    command: mvn -B -f $WORKSPACE/pom.xml install -Pqa,addons,customdb,mongodb -Dmaven.test.failure.ignore=true -Dnuxeo.tests.random.mode=STRICT

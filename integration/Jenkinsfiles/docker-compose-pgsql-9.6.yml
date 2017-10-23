@@ -42,4 +42,4 @@ services:
       - NX_PGSQL_DB_ADMINNAME=template1
       - NX_PGSQL_DB_ADMINPASS=nuxeo
       - NX_PGSQL_DB_ADMINUSER=nxadmin
-    command: mvn -f $WORKSPACE/pom.xml install -Pqa,addons,customdb,pgsql -Dmaven.test.failure.ignore=true -Dnuxeo.tests.random.mode=STRICT
+    command: mvn -B -f $WORKSPACE/pom.xml install -Pqa,addons,customdb,pgsql -Dmaven.test.failure.ignore=true -Dnuxeo.tests.random.mode=STRICT

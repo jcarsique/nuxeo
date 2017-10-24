@@ -30,6 +30,7 @@ services:
     user: jenkins
     volumes:
       - $WORKSPACE:$WORKSPACE
+      - /var/run/docker.sock:/var/run/docker.sock:rw
     links:
       - db
     environment:

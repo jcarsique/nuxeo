@@ -18,9 +18,9 @@
  */
 
 currentBuild.setDescription("PostgreSQL 9.6")
-timeout(time: 2, unit: 'HOURS') {
-    timestamps {
-        node('SLAVE') {
+node('SLAVE') {
+    timeout(time: 2, unit: 'HOURS') {
+        timestamps {
             stage 'clone'
                 checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [
                         [url: 'git@github.com:nuxeo/nuxeo.git']

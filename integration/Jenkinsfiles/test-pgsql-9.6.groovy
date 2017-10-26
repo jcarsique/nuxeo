@@ -32,8 +32,8 @@ node('SLAVE') {
             try {
                 stage 'tests'
                     sh """#!/bin/bash -x
-                        docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                         export TESTS_COMMAND="mvn -B -f $WORKSPACE/pom.xml install -Pqa,addons,customdb,pgsql -Dmaven.test.failure.ignore=true -Dnuxeo.tests.random.mode=STRICT"
+                        docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                         docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
                     """
                 // setBuildStatus("Build complete", "SUCCESS");

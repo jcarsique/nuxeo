@@ -40,8 +40,8 @@ node('SLAVE') {
                         unstash "clone"
                         try {
                             sh """#!/bin/bash -x
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                                 export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-server-cmis-tests/pom.xml clean verify -Pqa,tomcat,pgsql"
+                                docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                                 docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
                                 ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-server-cmis-tests/target/tomcat/log/server.log
                             """
@@ -64,8 +64,8 @@ node('SLAVE') {
                         unstash "clone"
                         try {
                             sh """#!/bin/bash -x
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                                 export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/pom.xml clean verify -Pqa,tomcat,pgsql"
+                                docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                                 docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
                                 ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/tomcat/log/server.log
                             """
@@ -88,8 +88,8 @@ node('SLAVE') {
                         unstash "clone"
                         try {
                             sh """#!/bin/bash -x
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                                 export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/pom.xml clean verify -Pqa,tomcat,pgsql"
+                                docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml pull
                                 docker-compose -f integration/Jenkinsfiles/docker-compose-pgsql-9.6.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
                                 ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/tomcat/log/server.log
                             """

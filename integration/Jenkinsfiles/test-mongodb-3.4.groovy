@@ -32,8 +32,8 @@ node('SLAVE') {
             try {
                 stage 'tests'
                     sh """#!/bin/bash -x
-                        docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
                         export TESTS_COMMAND="mvn -B -f $WORKSPACE/pom.xml install -Pqa,addons,customdb,mongodb -Dmaven.test.failure.ignore=true -Dnuxeo.tests.random.mode=STRICT"
+                        docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
                         docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
                     """
                 // setBuildStatus("Build complete", "SUCCESS");

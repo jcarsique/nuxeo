@@ -22,9 +22,10 @@ node('SLAVE') {
     timeout(time: 2, unit: 'HOURS') {
         timestamps {
             stage 'clone'
-                checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [
-                        [url: 'git@github.com:nuxeo/nuxeo.git']
-                    ]])
+                checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false,
+                          extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'WipeWorkspace']],
+                          submoduleCfg: [], userRemoteConfigs: [[url: 'git@github.com:nuxeo/nuxeo.git']]
+                    ])
                 sh """#!/bin/bash -xe
                     ./clone.py $BRANCH -f $PARENT_BRANCH
                 """

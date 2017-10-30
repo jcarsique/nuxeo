@@ -25,12 +25,12 @@ node('SLAVE') {
     timeout(time: 2, unit: 'HOURS') {
         timestamps {
             stage 'clone'
-                checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false, extensions: [
-                        [$class: 'PathRestriction', excludedRegions: '', includedRegions: 'nuxeo-distribution/.*'],
-                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'nuxeo-distribution']]]
-                    ], submoduleCfg: [], userRemoteConfigs: [
-                        [url: 'git://github.com/nuxeo/nuxeo.git']
-                    ]])
+                checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false,
+                          extensions: [[$class: 'PathRestriction', excludedRegions: '', includedRegions: 'nuxeo-distribution/.*'],
+                                       [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'nuxeo-distribution']]],
+                                       [$class: 'CleanBeforeCheckout'], [$class: 'WipeWorkspace']
+                          ], submoduleCfg: [], userRemoteConfigs: [[url: 'git://github.com/nuxeo/nuxeo.git']]
+                    ])
             stash 'clone'
 
             stage 'tests'

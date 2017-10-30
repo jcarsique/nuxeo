@@ -19,6 +19,9 @@
 
 currentBuild.setDescription("MongoDB 3.4")
 node('SLAVE') {
+    tool name: 'ant-1.9', type: 'ant'
+    tool name: 'java-8-openjdk', type: 'hudson.model.JDK'
+    tool name: 'maven-3', type: 'hudson.tasks.Maven$MavenInstallation'
     timeout(time: 2, unit: 'HOURS') {
         timestamps {
             stage 'clone'

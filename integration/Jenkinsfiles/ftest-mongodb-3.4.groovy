@@ -22,12 +22,12 @@ node('SLAVE') {
     tool name: 'ant-1.9', type: 'ant'
     tool name: 'java-8-openjdk', type: 'hudson.model.JDK'
     tool name: 'maven-3', type: 'hudson.tasks.Maven$MavenInstallation'
-    timeout(time: 2, unit: 'HOURS') {
+    timeout(time: 12, unit: 'HOURS') {
         timestamps {
             stage 'clone'
                 checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false,
-                          extensions: [[$class: 'PathRestriction', excludedRegions: '', includedRegions: 'nuxeo-distribution/.*'],
-                                       [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'nuxeo-distribution']]],
+                          extensions: [[$class: 'PathRestriction', excludedRegions: '', includedRegions: ['nuxeo-distribution/.*'], ['integration/.*']],
+                                       [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'nuxeo-distribution'], [path: 'integration']]],
                                        [$class: 'CleanBeforeCheckout'], [$class: 'WipeWorkspace']
                           ], submoduleCfg: [], userRemoteConfigs: [[url: 'git://github.com/nuxeo/nuxeo.git']]
                     ])
@@ -39,13 +39,15 @@ node('SLAVE') {
                     node('SLAVE') {
                         unstash "clone"
                         try {
-                            sh """#!/bin/bash -x
-                                export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-server-cmis-tests/pom.xml clean verify -Pqa,tomcat,mongodb"
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
-                                ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-server-cmis-tests/target/tomcat/log/server.log
-                            """
-                            // setBuildStatus("CMIS Build complete", "SUCCESS");
+                            timeout(time: 2, unit: 'HOURS') {
+                                sh """#!/bin/bash -x
+                                    export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-server-cmis-tests/pom.xml clean verify -Pqa,tomcat,mongodb"
+                                    docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
+                                    docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
+                                    ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-server-cmis-tests/target/tomcat/log/server.log
+                                """
+                                // setBuildStatus("CMIS Build complete", "SUCCESS");
+                            }
                         } finally {
                             archive 'nuxeo-distribution/nuxeo-server-cmis-tests/target/**/failsafe-reports/*, nuxeo-distribution/nuxeo-server-cmis-tests/target/*.png, nuxeo-distribution/nuxeo-server-cmis-tests/target/*.json, nuxeo-distribution/nuxeo-server-cmis-tests/target/**/*.log, nuxeo-distribution/nuxeo-server-cmis-tests/target/**/log/*, nuxeo-distribution/nuxeo-server-cmis-tests/target/**/nxserver/config/distribution.properties, nuxeo-distribution/nuxeo-server-cmis-tests/target/nxtools-reports/*'
                             junit '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml, **/target/failsafe-reports/**/*.xml'
@@ -63,13 +65,15 @@ node('SLAVE') {
                     node('SLAVE') {
                         unstash "clone"
                         try {
-                            sh """#!/bin/bash -x
-                                export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/pom.xml clean verify -Pqa,tomcat,mongodb"
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
-                                ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/tomcat/log/server.log
-                            """
-                            // setBuildStatus("FunkLoad Build complete", "SUCCESS");
+                            timeout(time: 2, unit: 'HOURS') {
+                                sh """#!/bin/bash -x
+                                    export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/pom.xml clean verify -Pqa,tomcat,mongodb"
+                                    docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
+                                    docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
+                                    ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/tomcat/log/server.log
+                                """
+                                // setBuildStatus("FunkLoad Build complete", "SUCCESS");
+                            }
                         } finally {
                             archive 'nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/**/failsafe-reports/*, nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/*.png, nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/*.json, nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/**/*.log, nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/**/log/*, nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/**/nxserver/config/distribution.properties, nuxeo-distribution/nuxeo-server-cmis-tests/target/nxtools-reports/*, nuxeo-distribution/nuxeo-jsf-ui-funkload-tests/target/results/*/*'
                             junit '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml, **/target/failsafe-reports/**/*.xml'
@@ -87,13 +91,15 @@ node('SLAVE') {
                     node('SLAVE') {
                         unstash "clone"
                         try {
-                            sh """#!/bin/bash -x
-                                export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/pom.xml clean verify -Pqa,tomcat,mongodb"
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
-                                docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
-                                ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/tomcat/log/server.log
-                            """
-                            // setBuildStatus("FunkLoad Build complete", "SUCCESS");
+                            timeout(time: 2, unit: 'HOURS') {
+                                sh """#!/bin/bash -x
+                                    export TESTS_COMMAND="mvn -B -f $WORKSPACE/nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/pom.xml clean verify -Pqa,tomcat,mongodb"
+                                    docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml pull
+                                    docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
+                                    ! grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*ERROR.*' nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/tomcat/log/server.log
+                                """
+                                // setBuildStatus("WebDriver Build complete", "SUCCESS");
+                            }
                         } finally {
                             archive 'nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/**/failsafe-reports/*, nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/*.png, nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/*.json, nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/**/*.log, nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/**/log/*, nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/**/nxserver/config/distribution.properties, nuxeo-distribution/nuxeo-server-cmis-tests/target/nxtools-reports/*, nuxeo-distribution/nuxeo-jsf-ui-webdriver-tests/target/results/*/*'
                             junit '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml, **/target/failsafe-reports/**/*.xml'

@@ -22,18 +22,18 @@ node('SLAVE') {
     tool name: 'ant-1.9', type: 'ant'
     tool name: 'java-8-openjdk', type: 'hudson.model.JDK'
     tool name: 'maven-3', type: 'hudson.tasks.Maven$MavenInstallation'
-    timeout(time: 2, unit: 'HOURS') {
-        timestamps {
-            stage 'clone'
-                checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false,
-                          extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'WipeWorkspace']],
-                          submoduleCfg: [], userRemoteConfigs: [[url: 'git@github.com:nuxeo/nuxeo.git']]
-                    ])
-                sh """#!/bin/bash -xe
-                    ./clone.py $BRANCH -f $PARENT_BRANCH
-                """
+    timestamps {
+        stage 'clone'
+            checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false,
+                      extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'WipeWorkspace']],
+                      submoduleCfg: [], userRemoteConfigs: [[url: 'git@github.com:nuxeo/nuxeo.git']]
+                ])
+            sh """#!/bin/bash -xe
+                ./clone.py $BRANCH -f $PARENT_BRANCH
+            """
 
-            try {
+        try {
+            timeout(time: 3, unit: 'HOURS') {
                 stage 'tests'
                     sh """#!/bin/bash -x
                         export TESTS_COMMAND="mvn -B -f $WORKSPACE/pom.xml install -Pqa,addons,customdb,mongodb -Dmaven.test.failure.ignore=true -Dnuxeo.tests.random.mode=STRICT"
@@ -41,17 +41,17 @@ node('SLAVE') {
                         docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml --project-name $JOB_NAME-$BUILD_NUMBER up --no-color --build --abort-on-container-exit tests db
                     """
                 // setBuildStatus("Build complete", "SUCCESS");
-            } finally {
-                archive '**/target/failsafe-reports/*, **/target/*.png, **/target/**/*.log, **/target/**/log/*'
-                junit '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml, **/target/failsafe-reports/**/*.xml'
-                // missing Claim plugin
-                // emailext body: '$DEFAULT_CONTENT', recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'CulpritsRecipientProvider'], [$class: 'RequesterRecipientProvider']], replyTo: '$DEFAULT_RECIPIENTS', subject: '$DEFAULT_SUBJECT', to: '$DEFAULT_RECIPIENTS,ecm-qa@lists.nuxeo.com'
-                emailext body: '$DEFAULT_CONTENT', replyTo: '$DEFAULT_RECIPIENTS', subject: '$DEFAULT_SUBJECT', to: 'jcarsique@nuxeo.com'
-                // missing Jabber plugin
-                sh """#!/bin/bash -x
-                    docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml down
-                """
             }
+        } finally {
+            archive '**/target/failsafe-reports/*, **/target/*.png, **/target/**/*.log, **/target/**/log/*'
+            junit '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml, **/target/failsafe-reports/**/*.xml'
+            // missing Claim plugin
+            // emailext body: '$DEFAULT_CONTENT', recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'CulpritsRecipientProvider'], [$class: 'RequesterRecipientProvider']], replyTo: '$DEFAULT_RECIPIENTS', subject: '$DEFAULT_SUBJECT', to: '$DEFAULT_RECIPIENTS,ecm-qa@lists.nuxeo.com'
+            emailext body: '$DEFAULT_CONTENT', replyTo: '$DEFAULT_RECIPIENTS', subject: '$DEFAULT_SUBJECT', to: 'jcarsique@nuxeo.com'
+            // missing Jabber plugin
+            sh """#!/bin/bash -x
+                docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml down
+            """
         }
     }
 }

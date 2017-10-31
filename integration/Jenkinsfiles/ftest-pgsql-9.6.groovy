@@ -26,7 +26,8 @@ node('SLAVE') {
         timestamps {
             stage 'clone'
                 checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/nuxeo/nuxeo'], doGenerateSubmoduleConfigurations: false,
-                          extensions: [[$class: 'PathRestriction', excludedRegions: '', includedRegions: ['nuxeo-distribution/.*'], ['integration/.*']],
+                          extensions: [[$class: 'PathRestriction', excludedRegions: '', includedRegions: '''nuxeo-distribution/.*
+integration/.*'''],
                                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'nuxeo-distribution'], [path: 'integration']]],
                                        [$class: 'CleanBeforeCheckout'], [$class: 'WipeWorkspace']
                           ], submoduleCfg: [], userRemoteConfigs: [[url: 'git://github.com/nuxeo/nuxeo.git']]

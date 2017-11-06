@@ -30,3 +30,6 @@ If you need to know the default environment variables set, then you can issue on
 
     export TESTS_COMMAND="env|sort"
     docker-compose -f integration/Jenkinsfiles/docker-compose-mongodb-3.4.yml up --no-color --build --abort-on-container-exit tests db
+
+dsdsdq
+qsds
